@@ -14,6 +14,7 @@ ApplicationWindow {
     readonly property string pathToBuffer: "file:///" + AssetsDir + "/buffer.tiff"
     readonly property real fps: 30
     readonly property real timestep: 1000 / fps
+    property bool play: false
 
     Timer {
         interval: timestep
@@ -22,7 +23,7 @@ ApplicationWindow {
 
         onTriggered: {
             //AssetMaker.writeBuffer()
-            //AssetMaker.readAndWriteNext();
+            if(play) AssetMaker.readAndWriteNext();
             img2.source = ""
             img2.source = pathToBuffer
         }
@@ -47,7 +48,7 @@ ApplicationWindow {
         spacing: 16
         Button {
             id: butt
-            text: "Cycle & Write"
+            text: "Open input"
             anchors.right: fileDialog.left
             onClicked: {
                 fileDialog.open()
@@ -60,7 +61,7 @@ ApplicationWindow {
         TextField {
             id: ts
             width: 180
-            placeholderText: "0"
+            placeholderText: "enter frame number"
             focus: true
             onAccepted:AssetMaker.seekTo(Number(ts.text) * timestep)
             EnterKey.type: Qt.EnterKeyDone
@@ -68,10 +69,11 @@ ApplicationWindow {
             Keys.onEnterPressed: accepted()
         }
         Button {
-            id: randomSeek
-            text: "haha"
+            id: playbutt
+            text: play ? "Pause" : "Play"
+            anchors.right: fileDialog.left
             onClicked: {
-                AssetMaker.seekTo(Math.floor(Math.random() * 10000))
+                play = !play
             }
         }
     }

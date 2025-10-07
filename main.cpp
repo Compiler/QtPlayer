@@ -71,7 +71,7 @@ public:
         _reader->nextFrame();
         auto end = std::chrono::high_resolution_clock::now();
         auto ms = std::chrono::duration<double, std::milli>(end - now).count();
-        qInfo().nospace() << "nextframe() took " << ms << " ms";
+        qInfo().nospace() << "main: nextframe() took " << ms << " ms";
         std::cout << _reader->getCurrentFrame()->best_effort_timestamp << std::endl;
         auto mat = _reader->getFrame();
         const QString dir = sourceDirPath() + "/Assets";
@@ -86,7 +86,7 @@ public:
         _reader->seekTo(seekToMs);
         auto end = std::chrono::high_resolution_clock::now();
         auto ms = std::chrono::duration<double, std::milli>(end - now).count();
-        qInfo().nospace() << "nextframe() took " << ms << " ms";
+        qInfo().nospace() << "main: seekTo() took " << ms << " ms";
         std::cout << _reader->getCurrentFrame()->best_effort_timestamp << std::endl;
         auto mat = _reader->getFrame();
         const QString dir = sourceDirPath() + "/Assets";
