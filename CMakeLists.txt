@@ -19,6 +19,8 @@ qt_add_qml_module(appQtPlayer
     QML_FILES
         Main.qml
         RESOURCES Assets/256x256_test.png
+        SOURCES ffvideoreader.h ffvideoreader.cpp
+        SOURCES Reader.h
 )
 
 

@@ -18,6 +18,8 @@ extern "C" {
 #include <opencv2/opencv.hpp>
 #include <filesystem>
 
+#include "ffvideoreader.h"
+
 QString sourceDirPath() {
     QFileInfo fi(QString::fromUtf8(__FILE__));
     return fi.absolutePath();
@@ -25,6 +27,8 @@ QString sourceDirPath() {
 
 class AssetMaker : public QObject { Q_OBJECT
 public:
+
+    std::unique_ptr<videoio::FFVideoReader> _reader;
     Q_INVOKABLE void writeBuffer() {
         static int count = 0;
         int pattern = count % 3;
@@ -50,6 +54,44 @@ public:
 
         cv::imwrite((dir + "/buffer.tiff").toStdString(), img);
     }
+
+    Q_INVOKABLE void openAndWrite(QString file) {
+        _reader = std::make_unique<videoio::FFVideoReader>(file);
+        _reader->open();
+        auto mat = _reader->getFrame();
+        const QString dir = sourceDirPath() + "/Assets";
+        cv::imwrite((dir + "/buffer.tiff").toStdString(), mat);
+    }
+
+    Q_INVOKABLE void readAndWriteNext() {
+        if(!_reader) return;
+        std::cout << __func__ << std::endl;
+        //_reader->seekTo(5000);
+        auto now = std::chrono::high_resolution_clock::now();
+        _reader->nextFrame();
+        auto end = std::chrono::high_resolution_clock::now();
+        auto ms = std::chrono::duration<double, std::milli>(end - now).count();
+        qInfo().nospace() << "nextframe() took " << ms << " ms";
+        std::cout << _reader->getCurrentFrame()->best_effort_timestamp << std::endl;
+        auto mat = _reader->getFrame();
+        const QString dir = sourceDirPath() + "/Assets";
+        cv::imwrite((dir + "/buffer.tiff").toStdString(), mat);
+    }
+
+    Q_INVOKABLE void seekTo(float seekToMs) {
+        if(!_reader) return;
+        std::cout << __func__ << std::endl;
+        //_reader->seekTo(5000);
+        auto now = std::chrono::high_resolution_clock::now();
+        _reader->seekTo(seekToMs);
+        auto end = std::chrono::high_resolution_clock::now();
+        auto ms = std::chrono::duration<double, std::milli>(end - now).count();
+        qInfo().nospace() << "nextframe() took " << ms << " ms";
+        std::cout << _reader->getCurrentFrame()->best_effort_timestamp << std::endl;
+        auto mat = _reader->getFrame();
+        const QString dir = sourceDirPath() + "/Assets";
+        cv::imwrite((dir + "/buffer.tiff").toStdString(), mat);
+    }
 };
 
 
@@ -58,7 +100,6 @@ public:
 
 int main(int argc, char *argv[]) {
     std::cout << "App dir path: " << sourceDirPath().toStdString() << std::endl;
-    qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
     AssetMaker maker;
     maker.writeBuffer();
 
