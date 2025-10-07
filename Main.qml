@@ -4,7 +4,7 @@ import QtQuick.Controls
 
 import QtQuick.Dialogs
 
-Window {
+ApplicationWindow {
     id: window
     width: 1080
     height: 720
@@ -22,7 +22,7 @@ Window {
 
         onTriggered: {
             //AssetMaker.writeBuffer()
-            AssetMaker.readAndWriteNext();
+            //AssetMaker.readAndWriteNext();
             img2.source = ""
             img2.source = pathToBuffer
         }
@@ -41,38 +41,41 @@ Window {
         }
     }
 
-    Button {
-        id: butt
-        text: "Cycle & Write"
-        anchors.right: fileDialog.left
-        onClicked: {
-            fileDialog.open()
-            AssetMaker.writeBuffer()
+    RowLayout {
+        width: parent.width
+        height: 32
+        spacing: 16
+        Button {
+            id: butt
+            text: "Cycle & Write"
+            anchors.right: fileDialog.left
+            onClicked: {
+                fileDialog.open()
+                AssetMaker.writeBuffer()
+            }
+        }
+
+
+
+        TextField {
+            id: ts
+            width: 180
+            placeholderText: "0"
+            focus: true
+            onAccepted:AssetMaker.seekTo(Number(ts.text) * timestep)
+            EnterKey.type: Qt.EnterKeyDone
+            Keys.onReturnPressed: accepted()
+            Keys.onEnterPressed: accepted()
+        }
+        Button {
+            id: randomSeek
+            text: "haha"
+            onClicked: {
+                AssetMaker.seekTo(Math.floor(Math.random() * 10000))
+            }
         }
     }
 
-
-
-    TextField {
-        id: ts
-        width: 180
-        anchors.top: butt.bottom
-        placeholderText: "0"
-        focus: true
-        onAccepted: if (acceptableInput) AssetMaker.seekTo(ts.text)
-        EnterKey.type: Qt.EnterKeyDone
-        Keys.onReturnPressed: accepted()
-        Keys.onEnterPressed: accepted()
-    }
-    Button {
-        id: randomSeek
-        text: "haha"
-        anchors.right: fileDialog.left
-        anchors.top: ts.bottom
-        onClicked: {
-            AssetMaker.seekTo(Math.floor(Math.random() * 10000))
-        }
-    }
 
 
     RowLayout {
@@ -93,5 +96,6 @@ Window {
     }
 
 
+    Component.onCompleted: Qt.application.style = "Fusion"
 
 }
