@@ -1,5 +1,13 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+extern "C" {
+#include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
+#include <libavutil/avutil.h>
+#include <libswscale/swscale.h>
+#include <libswresample/swresample.h>
+}
+
 
 int main(int argc, char *argv[])
 {

@@ -19,9 +19,43 @@ qt_add_qml_module(appQtPlayer
         Main.qml
 )
 
-# Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
-# If you are developing for iOS or macOS you should consider setting an
-# explicit, fixed bundle identifier manually though.
+find_package(PkgConfig REQUIRED)
+set(PKG_CONFIG_EXECUTABLE "/opt/homebrew/bin/pkg-config" CACHE FILEPATH "Force brew pkg-config")
+
+message(STATUS "Using pkg-config: ${PKG_CONFIG_EXECUTABLE}")
+message(STATUS "Env PATH seen by CMake: $ENV{PATH}")
+execute_process(COMMAND ${PKG_CONFIG_EXECUTABLE} --version
+                OUTPUT_VARIABLE _pcver OUTPUT_STRIP_TRAILING_WHITESPACE)
+message(STATUS "pkg-config version: ${_pcver}")
+execute_process(COMMAND ${PKG_CONFIG_EXECUTABLE} --variable pc_path pkg-config
+                OUTPUT_VARIABLE _pcpath OUTPUT_STRIP_TRAILING_WHITESPACE)
+message(STATUS "pkg-config pc_path: ${_pcpath}")
+execute_process(COMMAND ${PKG_CONFIG_EXECUTABLE} --modversion libavformat
+                RESULT_VARIABLE _rc OUTPUT_VARIABLE _v ERROR_VARIABLE _e
+                OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_STRIP_TRAILING_WHITESPACE)
+message(STATUS "libavformat probe rc=${_rc} ver='${_v}' err='${_e}'")
+
+pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
+  libavformat
+  libavcodec
+  libavutil
+  libswscale
+  libswresample
+)
+
+target_include_directories(appQtPlayer PRIVATE
+  ${FFMPEG_INCLUDE_DIRS}
+)
+
+target_link_libraries(appQtPlayer PRIVATE
+  PkgConfig::FFMPEG
+)
+
+target_compile_definitions(appQtPlayer PRIVATE
+  __STDC_CONSTANT_MACROS
+  __STDC_LIMIT_MACROS
+)
+
 set_target_properties(appQtPlayer PROPERTIES
 #    MACOSX_BUNDLE_GUI_IDENTIFIER com.example.appQtPlayer
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
@@ -40,3 +74,4 @@ install(TARGETS appQtPlayer
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
