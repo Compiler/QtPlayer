@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 
 Window {
     id: window
@@ -7,6 +8,28 @@ Window {
     height: 720
     visible: true
     title: qsTr("QtPlayer")
+
+    readonly property string pathToBuffer: "file:///" + AssetsDir + "/buffer.tiff"
+    readonly property real fps: 10
+    readonly property real timestep: 1000 / fps
+
+    Timer {
+        interval: timestep
+        repeat: true
+        running:true
+
+        onTriggered: {
+            AssetMaker.writeBuffer()
+            img2.source = ""
+            img2.source = pathToBuffer
+        }
+    }
+    Button {
+        text: "Cycle & Write"
+        onClicked: {
+            AssetMaker.writeBuffer()
+        }
+    }
 
 
     RowLayout {
@@ -20,23 +43,11 @@ Window {
             id: img2
             Layout.fillWidth: true
             Layout.fillHeight: true
-            source: "qrc:/qt/qml/QtPlayer/Assets/256x256_test.png"
+            source: "file:///" + AssetsDir + "/256x256_test.png"
             Component.onCompleted: {
                 console.log("Resolved:", Qt.resolvedUrl("Assets/256x256_test.png"))
             }
-            onStatusChanged: {
-                console.log("img1 status:", status, "error:", errorString)
-            }
         }
-
-        Image {
-            id: img1
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            source: "qrc:/qt/qml/QtPlayer/Assets/256x256_test.png"
-        }
-
-
     }
 
 

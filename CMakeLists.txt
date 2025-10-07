@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 project(QtPlayer VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_AUTOMOC ON)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Quick)
 
@@ -24,9 +25,9 @@ qt_add_qml_module(appQtPlayer
 find_package(PkgConfig REQUIRED)
 set(PKG_CONFIG_EXECUTABLE "/opt/homebrew/bin/pkg-config" CACHE FILEPATH "Force brew pkg-config")
 
-#find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui videoio)
-#target_include_directories(appQtPlayer PRIVATE ${OpenCV_INCLUDE_DIRS})
-#target_link_libraries(appQtPlayer PRIVATE ${OpenCV_LIBS})
+find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui videoio)
+target_include_directories(appQtPlayer PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(appQtPlayer PRIVATE ${OpenCV_LIBS})
 
 
 message(STATUS "Using pkg-config: ${PKG_CONFIG_EXECUTABLE}")
