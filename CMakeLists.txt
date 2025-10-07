@@ -17,10 +17,17 @@ qt_add_qml_module(appQtPlayer
     VERSION 1.0
     QML_FILES
         Main.qml
+        RESOURCES Assets/256x256_test.png
 )
+
 
 find_package(PkgConfig REQUIRED)
 set(PKG_CONFIG_EXECUTABLE "/opt/homebrew/bin/pkg-config" CACHE FILEPATH "Force brew pkg-config")
+
+#find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui videoio)
+#target_include_directories(appQtPlayer PRIVATE ${OpenCV_INCLUDE_DIRS})
+#target_link_libraries(appQtPlayer PRIVATE ${OpenCV_LIBS})
+
 
 message(STATUS "Using pkg-config: ${PKG_CONFIG_EXECUTABLE}")
 message(STATUS "Env PATH seen by CMake: $ENV{PATH}")

@@ -1,39 +1,44 @@
 import QtQuick
-import QtQuick.VirtualKeyboard
+import QtQuick.Layouts
 
 Window {
     id: window
-    width: 640
-    height: 480
+    width: 1080
+    height: 720
     visible: true
-    title: qsTr("Hello World")
+    title: qsTr("QtPlayer")
 
-    InputPanel {
-        id: inputPanel
-        z: 99
-        x: 0
-        y: window.height
-        width: window.width
 
-        states: State {
-            name: "visible"
-            when: inputPanel.active
-            PropertyChanges {
-                target: inputPanel
-                y: window.height - inputPanel.height
+    RowLayout {
+        id: splitPanes
+
+        anchors.margins: 64
+        anchors.fill: parent
+
+
+        Image {
+            id: img2
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            source: "qrc:/qt/qml/QtPlayer/Assets/256x256_test.png"
+            Component.onCompleted: {
+                console.log("Resolved:", Qt.resolvedUrl("Assets/256x256_test.png"))
+            }
+            onStatusChanged: {
+                console.log("img1 status:", status, "error:", errorString)
             }
         }
-        transitions: Transition {
-            from: ""
-            to: "visible"
-            reversible: true
-            ParallelAnimation {
-                NumberAnimation {
-                    properties: "y"
-                    duration: 250
-                    easing.type: Easing.InOutQuad
-                }
-            }
+
+        Image {
+            id: img1
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            source: "qrc:/qt/qml/QtPlayer/Assets/256x256_test.png"
         }
+
+
     }
+
+
+
 }
