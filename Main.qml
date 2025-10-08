@@ -102,6 +102,7 @@ ApplicationWindow {
             id: videoView
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Component.onCompleted: AssetMaker.setVideoView(videoView)
         }
         RhiTextureItem {
             id: videoView2

@@ -62,7 +62,8 @@ public:
         _reader->open();
         auto mat = _reader->getFrame();
         const QString dir = sourceDirPath() + "/Assets";
-        cv::imwrite((dir + "/buffer.tiff").toStdString(), mat);
+        //cv::imwrite((dir + "/buffer.tiff").toStdString(), mat);
+        pushMat(mat);
     }
 
     Q_INVOKABLE void readAndWriteNext() {
@@ -77,7 +78,8 @@ public:
         std::cout << _reader->getCurrentFrame()->best_effort_timestamp << std::endl;
         auto mat = _reader->getFrame();
         const QString dir = sourceDirPath() + "/Assets";
-        cv::imwrite((dir + "/buffer.tiff").toStdString(), mat);
+        pushMat(mat);
+        //cv::imwrite((dir + "/buffer.tiff").toStdString(), mat);
     }
 
     Q_INVOKABLE void seekTo(float seekToMs) {
@@ -106,11 +108,24 @@ public:
         if (!_view) { qWarning() << "AssetMaker: no videoView set"; return; }
         cv::Mat rgba;
         switch (mat.type()) {
-        case CV_8UC3: cv::cvtColor(mat, rgba, cv::COLOR_BGR2RGBA); break;
-        case CV_8UC4: cv::cvtColor(mat, rgba, cv::COLOR_BGRA2RGBA); break;
-        default:      mat.convertTo(rgba, CV_8UC4); break; // best-effort
+        case CV_8UC3:
+            cv::cvtColor(mat, rgba, cv::COLOR_BGR2RGBA);
+            break;
+        case CV_8UC4:
+            cv::cvtColor(mat, rgba, cv::COLOR_BGRA2RGBA);
+            break;
+        case CV_16UC4: {
+            cv::Mat tmp8;
+            mat.convertTo(tmp8, CV_8UC4, 1.0/256.0);
+            rgba = std::move(tmp8);
+            break;
         }
-
+        default:
+            // best effort fallback: try downconvert with scale if depth>8
+            double alpha = mat.depth() > CV_8U ? 1.0 / ((1 << (CV_MAT_DEPTH(mat.type())==CV_16U?16:8)) / 256.0) : 1.0;
+            mat.convertTo(rgba, CV_8UC4, alpha);
+            break;
+        }
         QByteArray bytes(reinterpret_cast<const char*>(rgba.data),
                          int(rgba.total() * rgba.elemSize()));
 
@@ -140,15 +155,20 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("AssetsDir", QString::fromUtf8(sourceDirPath().toStdString()) + "/Assets");
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreated,
-        &app, [&](QObject* obj, const QUrl&) {
+        &app,
+        [&](QObject *obj, const QUrl &) {
             auto *win = qobject_cast<QQuickWindow*>(obj);
             if (!win) return;
-            if (auto *rhiItem = win->findChild<QObject*>("videoView")) {
+            if (QObject *rhiItem = win->findChild<QObject*>("videoView")) {
                 maker.setVideoView(rhiItem);
+                QObject::connect(rhiItem, &QObject::destroyed, &maker, [&]{
+                    maker.setVideoView(nullptr);
+                });
+            } else {
+                qWarning() << "videoView not found";
             }
         },
-        Qt::QueuedConnection);
-
+    Qt::QueuedConnection);
     engine.loadFromModule("QtPlayer", "Main");
     if (engine.rootObjects().isEmpty()) return -1;
 
