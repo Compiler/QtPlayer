@@ -82,6 +82,7 @@ public:
 
     Q_INVOKABLE void seekTo(float seekToMs) {
         if(!_reader) return;
+        if (!_view) { qWarning() << "AssetMaker: no videoView set"; return; }
         std::cout << __func__ << std::endl;
         //_reader->seekTo(5000);
         auto now = std::chrono::high_resolution_clock::now();
@@ -92,7 +93,36 @@ public:
         std::cout << _reader->getCurrentFrame()->best_effort_timestamp << std::endl;
         auto mat = _reader->getFrame();
         const QString dir = sourceDirPath() + "/Assets";
-        cv::imwrite((dir + "/buffer.tiff").toStdString(), mat);
+        pushMat(mat);
+        //cv::imwrite((dir + "/buffer.tiff").toStdString(), mat);
+    }
+
+
+    Q_INVOKABLE void setVideoView(QObject* obj) { _view = obj; }
+    QObject* _view;
+
+
+    Q_INVOKABLE void pushMat(const cv::Mat& mat) {
+        if (!_view) { qWarning() << "AssetMaker: no videoView set"; return; }
+        cv::Mat rgba;
+        switch (mat.type()) {
+        case CV_8UC3: cv::cvtColor(mat, rgba, cv::COLOR_BGR2RGBA); break;
+        case CV_8UC4: cv::cvtColor(mat, rgba, cv::COLOR_BGRA2RGBA); break;
+        default:      mat.convertTo(rgba, CV_8UC4); break; // best-effort
+        }
+
+        QByteArray bytes(reinterpret_cast<const char*>(rgba.data),
+                         int(rgba.total() * rgba.elemSize()));
+
+        const bool ok = QMetaObject::invokeMethod(
+            _view, "setFrameRGBA8",
+            Qt::QueuedConnection,
+            Q_ARG(QByteArray, bytes),
+            Q_ARG(int, rgba.cols),
+            Q_ARG(int, rgba.rows)
+            );
+        if (!ok) qWarning() << "AssetMaker: invoke setFrameRGBA8 failed (method missing?)";
+
     }
 };
 
@@ -108,16 +138,19 @@ int main(int argc, char *argv[]) {
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("AssetMaker", &maker);
     engine.rootContext()->setContextProperty("AssetsDir", QString::fromUtf8(sourceDirPath().toStdString()) + "/Assets");
-    auto *root = engine.rootObjects().isEmpty() ? nullptr : engine.rootObjects().first();
-    auto *rhiItem = root ? root->findChild<ExampleRhiItem*>("videoView") : nullptr;
-    Q_ASSERT(rhiItem);
     QObject::connect(
-        &engine,
-        &QQmlApplicationEngine::objectCreationFailed,
-        &app,
-        []() { QCoreApplication::exit(-1); },
+        &engine, &QQmlApplicationEngine::objectCreated,
+        &app, [&](QObject* obj, const QUrl&) {
+            auto *win = qobject_cast<QQuickWindow*>(obj);
+            if (!win) return;
+            if (auto *rhiItem = win->findChild<QObject*>("videoView")) {
+                maker.setVideoView(rhiItem);
+            }
+        },
         Qt::QueuedConnection);
+
     engine.loadFromModule("QtPlayer", "Main");
+    if (engine.rootObjects().isEmpty()) return -1;
 
     return app.exec();
 }
