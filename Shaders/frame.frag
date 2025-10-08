@@ -6,5 +6,5 @@ layout(binding = 1) uniform sampler2D uTex;
 
 void main() {
     vec4 texFragment = texture(uTex, o_uv);
-    fragColor = mix(texFragment, vec4(o_uv, 1.0, 1.0), 0.5);
+    fragColor = texFragment;
 }

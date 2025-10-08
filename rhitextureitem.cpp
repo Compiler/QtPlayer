@@ -69,9 +69,10 @@ static QShader getShader(const QString &name) {
 }
 
 static float vertexData[] = {
-    0.0f,   0.5f,   1.0f, 0.0f, 0.0f,
-    -0.5f,  -0.5f,   0.0f, 1.0f, 0.0f,
-    0.5f,  -0.5f,   1.0f, 0.0f, 1.0f,
+    //   x,     y,    u,   v
+     0.0f,   0.5f,  0.5f, 0.0f,
+    -0.5f,  -0.5f,  0.0f, 1.0f,
+     0.5f,  -0.5f,  1.0f, 1.0f
 };
 
 //![1]
@@ -105,10 +106,20 @@ void ExampleRhiItemRenderer::initialize(QRhiCommandBuffer *cb) {
                                           QRhiSampler::ClampToEdge, QRhiSampler::ClampToEdge));
         m_sampler->create();
 
-        QSize texSize = {1280, 640};
+        QSize texSize = {1, 1};
         m_tex.reset(m_rhi->newTexture(QRhiTexture::RGBA8, texSize, 1));
         m_tex->create();
 
+        {
+            QRhiResourceUpdateBatch *u = m_rhi->nextResourceUpdateBatch();
+            const quint32 px = 0xFFFFF000u;
+            QRhiTextureSubresourceUploadDescription sub(
+                QByteArray(reinterpret_cast<const char*>(&px), 4)
+                );
+            QRhiTextureUploadDescription desc(QRhiTextureUploadEntry(0, 0, sub));
+            u->uploadTexture(m_tex.get(), desc);
+            cb->resourceUpdate(u);
+        }
         if(false){
             auto *u = m_rhi->nextResourceUpdateBatch();
             const quint32 px = 0xFF000000u; // RGBA8 black
@@ -139,11 +150,11 @@ void ExampleRhiItemRenderer::initialize(QRhiCommandBuffer *cb) {
         });
         QRhiVertexInputLayout inputLayout;
         inputLayout.setBindings({
-            { 5 * sizeof(float) }
+            { 4 * sizeof(float) }
         });
         inputLayout.setAttributes({
             { 0, 0, QRhiVertexInputAttribute::Float2, 0 },
-            { 0, 1, QRhiVertexInputAttribute::Float3, 2 * sizeof(float) }
+            { 0, 1, QRhiVertexInputAttribute::Float2, 2 * sizeof(float) }
         });
         m_pipeline->setSampleCount(m_sampleCount);
         m_pipeline->setVertexInputLayout(inputLayout);
@@ -210,7 +221,7 @@ void ExampleRhiItemRenderer::render(QRhiCommandBuffer *cb) {
     cb->setGraphicsPipeline(m_pipeline.get());
     const QSize outputSize = renderTarget()->pixelSize();
     cb->setViewport(QRhiViewport(0, 0, outputSize.width(), outputSize.height()));
-    cb->setShaderResources();
+    cb->setShaderResources(m_srb.get());
     const QRhiCommandBuffer::VertexInput vbufBinding(m_vbuf.get(), 0);
     cb->setVertexInput(0, 1, &vbufBinding);
     cb->draw(3);
