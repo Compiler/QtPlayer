@@ -5,6 +5,24 @@
 QQuickRhiItemRenderer *ExampleRhiItem::createRenderer() {
     return new ExampleRhiItemRenderer;
 }
+void ExampleRhiItem::setFrameRGBA8(const QByteArray &pixels, int w, int h) {
+    // Called on GUI thread , maybeuse QMetaObject::invokeMethod with QueuedConnection
+    setProperty("_px", pixels);
+    setProperty("_sz", QSize(w, h));
+    update();
+}
+
+bool ExampleRhiItem::takePendingFrame(QByteArray &out, QSize &outSize)
+{
+    auto px = property("_px");
+    auto sz = property("_sz");
+    if (!px.isValid() || !sz.isValid()) return false;
+    out = px.toByteArray();
+    outSize = sz.toSize();
+    setProperty("_px", QVariant());
+    setProperty("_sz", QVariant());
+    return !out.isEmpty() && outSize.isValid();
+}
 
 void ExampleRhiItem::setAngle(float a) {
     if (m_angle == a)
@@ -25,11 +43,23 @@ void ExampleRhiItem::setBackgroundAlpha(float a) {
 }
 
 void ExampleRhiItemRenderer::synchronize(QQuickRhiItem *rhiItem) {
-    ExampleRhiItem *item = static_cast<ExampleRhiItem *>(rhiItem);
-    if (item->angle() != m_angle)
-        m_angle = item->angle();
-    if (item->backgroundAlpha() != m_alpha)
-        m_alpha = item->backgroundAlpha();
+    // may need more thread shit here tbh
+    //From a non-GUI thread: convert your cv::Mat to RGBA8, wrap in QByteArray, then
+    //QMetaObject::invokeMethod(rhiItem, "setFrameRGBA8", Qt::QueuedConnection, Q_ARG(QByteArray, payload), Q_ARG(int, w), Q_ARG(int, h));
+
+    auto *item = static_cast<ExampleRhiItem *>(rhiItem);
+    if (item->angle() != m_angle) m_angle = item->angle();
+    if (item->backgroundAlpha() != m_alpha) m_alpha = item->backgroundAlpha();
+
+    QByteArray px;
+    QSize sz;
+    if (item->takePendingFrame(px, sz)) {
+        m_pendingPixels = std::move(px);
+        m_pendingSize = sz;
+        m_hasPending = true;
+    }
+
+
 }
 //![0]
 
@@ -70,16 +100,42 @@ void ExampleRhiItemRenderer::initialize(QRhiCommandBuffer *cb) {
         m_ubuf.reset(m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, 64));
         m_ubuf->create();
 
+
+        m_sampler.reset(m_rhi->newSampler(QRhiSampler::Linear, QRhiSampler::Linear, QRhiSampler::None,
+                                          QRhiSampler::ClampToEdge, QRhiSampler::ClampToEdge));
+        m_sampler->create();
+
+        QSize texSize = {1280, 640};
+        m_tex.reset(m_rhi->newTexture(QRhiTexture::RGBA8, texSize, 1));
+        m_tex->create();
+
+        if(false){
+            auto *u = m_rhi->nextResourceUpdateBatch();
+            const quint32 px = 0xFF000000u; // RGBA8 black
+            QRhiTextureSubresourceUploadDescription sub(QByteArray(reinterpret_cast<const char*>(&px), 4));
+            QRhiTextureUploadDescription desc(QRhiTextureUploadEntry(0, 0, sub));
+            u->uploadTexture(m_tex.get(), desc);
+            cb->resourceUpdate(u);
+        }
+
         m_srb.reset(m_rhi->newShaderResourceBindings());
         m_srb->setBindings({
             QRhiShaderResourceBinding::uniformBuffer(0, QRhiShaderResourceBinding::VertexStage, m_ubuf.get()),
+            QRhiShaderResourceBinding::sampledTexture(1, QRhiShaderResourceBinding::FragmentStage, m_tex.get(), m_sampler.get()),
         });
         m_srb->create();
 
         m_pipeline.reset(m_rhi->newGraphicsPipeline());
+        const QShader vs = getShader(":/scenegraph/rhitextureitem/shaders/frame.vert.qsb");
+        const QShader fs = getShader(":/scenegraph/rhitextureitem/shaders/frame.frag.qsb");
+        if (!vs.isValid() || !fs.isValid()) {
+            qFatal("QSB shader(s) missing or invalid. Check resource path & qsb output.");
+        }
+        Q_ASSERT(vs.isValid());
+        Q_ASSERT(fs.isValid());
         m_pipeline->setShaderStages({
-           { QRhiShaderStage::Vertex, getShader(QLatin1String(":/scenegraph/rhitextureitem/shaders/frame.vert.qsb")) },
-           { QRhiShaderStage::Fragment, getShader(QLatin1String(":/scenegraph/rhitextureitem/shaders/frame.frag.qsb")) }
+           { QRhiShaderStage::Vertex, vs },
+           { QRhiShaderStage::Fragment, fs }
         });
         QRhiVertexInputLayout inputLayout;
         inputLayout.setBindings({
@@ -109,7 +165,40 @@ void ExampleRhiItemRenderer::initialize(QRhiCommandBuffer *cb) {
 
 //![3]
 void ExampleRhiItemRenderer::render(QRhiCommandBuffer *cb) {
+    if (m_hasPending) {
+        if (!m_tex || m_tex->pixelSize() != m_pendingSize) {
+            m_tex.reset();
+            m_tex.reset(m_rhi->newTexture(QRhiTexture::RGBA8, m_pendingSize, 1));
+            m_tex->create();
+
+            // Rebuild 8SRB with the real texture
+            m_srb.reset(m_rhi->newShaderResourceBindings());
+            m_srb->setBindings({
+                QRhiShaderResourceBinding::uniformBuffer(0, QRhiShaderResourceBinding::VertexStage, m_ubuf.get()),
+                QRhiShaderResourceBinding::sampledTexture(1, QRhiShaderResourceBinding::FragmentStage, m_tex.get(), m_sampler.get())
+            });
+            m_srb->create();
+            m_pipeline->setShaderResourceBindings(m_srb.get());
+        }
+
+        QRhiResourceUpdateBatch *u = m_rhi->nextResourceUpdateBatch();
+
+        QRhiTextureSubresourceUploadDescription sub(m_pendingPixels);
+        // tightly packed?
+        sub.setDataStride(static_cast<quint32>(m_pendingSize.width() * 4));  // RGBA8
+
+        QRhiTextureUploadEntry entry(0, 0, sub);
+        QRhiTextureUploadDescription desc(entry);
+        u->uploadTexture(m_tex.get(), desc);
+        cb->resourceUpdate(u);
+
+        m_hasPending = false;
+        m_pendingPixels.clear();
+    }
+
     QRhiResourceUpdateBatch *resourceUpdates = m_rhi->nextResourceUpdateBatch();
+
+    // update uniforms pleaseee
     QMatrix4x4 modelViewProjection = m_viewProjection;
     modelViewProjection.rotate(m_angle, 0, 1, 0);
     resourceUpdates->updateDynamicBuffer(m_ubuf.get(), 0, 64, modelViewProjection.constData());
