@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 
 import QtQuick.Dialogs
-import RhiTextureItem
+import QtPlayer 1.0
 
 ApplicationWindow {
     id: window

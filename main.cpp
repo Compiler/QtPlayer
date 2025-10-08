@@ -97,10 +97,6 @@ public:
 };
 
 
-
-#include "rhitextureitem.h"
-
-
 int main(int argc, char *argv[]) {
     std::cout << "App dir path: " << sourceDirPath().toStdString() << std::endl;
     AssetMaker maker;
@@ -108,7 +104,6 @@ int main(int argc, char *argv[]) {
 
     QGuiApplication app(argc, argv);
     QQmlApplicationEngine engine;
-    qmlRegisterType<ExampleRhiItem>("RhiTextureItem", 1, 0, "RhiTextureItem");
     engine.rootContext()->setContextProperty("AssetMaker", &maker);
     engine.rootContext()->setContextProperty("AssetsDir", QString::fromUtf8(sourceDirPath().toStdString()) + "/Assets");
     QObject::connect(

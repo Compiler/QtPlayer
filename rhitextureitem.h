@@ -29,7 +29,7 @@ private:
 class ExampleRhiItem : public QQuickRhiItem
 {
     Q_OBJECT
-    QML_NAMED_ELEMENT(ExampleRhiItem)
+    QML_NAMED_ELEMENT(RhiTextureItem)
     Q_PROPERTY(float angle READ angle WRITE setAngle NOTIFY angleChanged)
     Q_PROPERTY(float backgroundAlpha READ backgroundAlpha WRITE setBackgroundAlpha NOTIFY backgroundAlphaChanged)
 
