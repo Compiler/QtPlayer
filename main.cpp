@@ -1,6 +1,8 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QQuickWindow>
+#include <QSGRendererInterface>
 
 #include <QString>
 #include <QFileInfo>
@@ -96,6 +98,7 @@ public:
 
 
 
+#include "rhitextureitem.h"
 
 
 int main(int argc, char *argv[]) {
@@ -105,6 +108,7 @@ int main(int argc, char *argv[]) {
 
     QGuiApplication app(argc, argv);
     QQmlApplicationEngine engine;
+    qmlRegisterType<ExampleRhiItem>("RhiTextureItem", 1, 0, "RhiTextureItem");
     engine.rootContext()->setContextProperty("AssetMaker", &maker);
     engine.rootContext()->setContextProperty("AssetsDir", QString::fromUtf8(sourceDirPath().toStdString()) + "/Assets");
     QObject::connect(

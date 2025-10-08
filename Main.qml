@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 
 import QtQuick.Dialogs
+import RhiTextureItem
 
 ApplicationWindow {
     id: window
@@ -94,6 +95,12 @@ ApplicationWindow {
             source: "file:///" + AssetsDir + "/256x256_test.png"
             cache: false
             asynchronous: false
+        }
+
+        RhiTextureItem {
+            id: rhiItem
+            Layout.fillWidth: true
+            Layout.fillHeight: true
         }
     }
 

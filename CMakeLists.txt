@@ -5,9 +5,9 @@ project(QtPlayer VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS Core GuiPrivate Qml Quick ShaderTools)
 
-qt_standard_project_setup(REQUIRES 6.5)
+qt_standard_project_setup(REQUIRES 6.9)
 
 qt_add_executable(appQtPlayer
     main.cpp
@@ -21,6 +21,7 @@ qt_add_qml_module(appQtPlayer
         RESOURCES Assets/256x256_test.png
         SOURCES ffvideoreader.h ffvideoreader.cpp
         SOURCES Reader.h
+        SOURCES rhitextureitem.h rhitextureitem.cpp
 )
 
 
@@ -76,6 +77,32 @@ set_target_properties(appQtPlayer PROPERTIES
 
 target_link_libraries(appQtPlayer
     PRIVATE Qt6::Quick
+    Qt6::Core
+    Qt6::Gui
+    Qt6::GuiPrivate
+    Qt6::Qml
+    Qt6::Quick
+)
+
+
+qt_add_shaders(appQtPlayer "rhitextureitem_shaders"
+    PRECOMPILE
+    OPTIMIZED
+    PREFIX
+        /scenegraph/rhitextureitem
+    FILES
+        shaders/color.vert
+        shaders/color.frag
+)
+
+qt_add_shaders(appQtPlayer "rhitextureitem_effect_shaders"
+    BATCHABLE
+    PRECOMPILE
+    OPTIMIZED
+    PREFIX
+        /scenegraph/rhitextureitem
+    FILES
+        shaders/checker.frag
 )
 
 include(GNUInstallDirs)
