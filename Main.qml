@@ -103,6 +103,11 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.fillHeight: true
         }
+        RhiTextureItem {
+            id: videoView2
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+        }
     }
 
 
