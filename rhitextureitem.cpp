@@ -2,13 +2,11 @@
 #include <QFile>
 
 //![0]
-QQuickRhiItemRenderer *ExampleRhiItem::createRenderer()
-{
+QQuickRhiItemRenderer *ExampleRhiItem::createRenderer() {
     return new ExampleRhiItemRenderer;
 }
 
-void ExampleRhiItem::setAngle(float a)
-{
+void ExampleRhiItem::setAngle(float a) {
     if (m_angle == a)
         return;
 
@@ -17,8 +15,7 @@ void ExampleRhiItem::setAngle(float a)
     update();
 }
 
-void ExampleRhiItem::setBackgroundAlpha(float a)
-{
+void ExampleRhiItem::setBackgroundAlpha(float a) {
     if (m_alpha == a)
         return;
 
@@ -27,8 +24,7 @@ void ExampleRhiItem::setBackgroundAlpha(float a)
     update();
 }
 
-void ExampleRhiItemRenderer::synchronize(QQuickRhiItem *rhiItem)
-{
+void ExampleRhiItemRenderer::synchronize(QQuickRhiItem *rhiItem) {
     ExampleRhiItem *item = static_cast<ExampleRhiItem *>(rhiItem);
     if (item->angle() != m_angle)
         m_angle = item->angle();
@@ -37,8 +33,7 @@ void ExampleRhiItemRenderer::synchronize(QQuickRhiItem *rhiItem)
 }
 //![0]
 
-static QShader getShader(const QString &name)
-{
+static QShader getShader(const QString &name) {
     QFile f(name);
     return f.open(QIODevice::ReadOnly) ? QShader::fromSerialized(f.readAll()) : QShader();
 }
@@ -50,8 +45,7 @@ static float vertexData[] = {
 };
 
 //![1]
-void ExampleRhiItemRenderer::initialize(QRhiCommandBuffer *cb)
-{
+void ExampleRhiItemRenderer::initialize(QRhiCommandBuffer *cb) {
     if (m_rhi != rhi()) {
         m_rhi = rhi();
         m_pipeline.reset();
@@ -114,8 +108,7 @@ void ExampleRhiItemRenderer::initialize(QRhiCommandBuffer *cb)
 }
 
 //![3]
-void ExampleRhiItemRenderer::render(QRhiCommandBuffer *cb)
-{
+void ExampleRhiItemRenderer::render(QRhiCommandBuffer *cb) {
     QRhiResourceUpdateBatch *resourceUpdates = m_rhi->nextResourceUpdateBatch();
     QMatrix4x4 modelViewProjection = m_viewProjection;
     modelViewProjection.rotate(m_angle, 0, 1, 0);

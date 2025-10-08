@@ -97,6 +97,8 @@ public:
 };
 
 
+
+#include "rhitextureitem.h"
 int main(int argc, char *argv[]) {
     std::cout << "App dir path: " << sourceDirPath().toStdString() << std::endl;
     AssetMaker maker;
@@ -106,6 +108,9 @@ int main(int argc, char *argv[]) {
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("AssetMaker", &maker);
     engine.rootContext()->setContextProperty("AssetsDir", QString::fromUtf8(sourceDirPath().toStdString()) + "/Assets");
+    auto *root = engine.rootObjects().isEmpty() ? nullptr : engine.rootObjects().first();
+    auto *rhiItem = root ? root->findChild<ExampleRhiItem*>("videoView") : nullptr;
+    Q_ASSERT(rhiItem);
     QObject::connect(
         &engine,
         &QQmlApplicationEngine::objectCreationFailed,

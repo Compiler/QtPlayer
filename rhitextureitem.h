@@ -26,8 +26,7 @@ private:
     float m_alpha = 1.0f;
 };
 
-class ExampleRhiItem : public QQuickRhiItem
-{
+class ExampleRhiItem : public QQuickRhiItem {
     Q_OBJECT
     QML_NAMED_ELEMENT(RhiTextureItem)
     Q_PROPERTY(float angle READ angle WRITE setAngle NOTIFY angleChanged)

@@ -98,7 +98,7 @@ ApplicationWindow {
         }
 
         RhiTextureItem {
-            id: rhiItem
+            id: videoView
             Layout.fillWidth: true
             Layout.fillHeight: true
         }
