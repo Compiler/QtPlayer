@@ -9,8 +9,7 @@ layout(std140, binding = 0) uniform buf {
     mat4 mvp;
 };
 
-void main()
-{
+void main() {
     v_color = color;
     gl_Position = mvp * position;
 }

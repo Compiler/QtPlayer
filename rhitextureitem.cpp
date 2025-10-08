@@ -41,7 +41,7 @@ static QShader getShader(const QString &name) {
 static float vertexData[] = {
     0.0f,   0.5f,   1.0f, 0.0f, 0.0f,
     -0.5f,  -0.5f,   0.0f, 1.0f, 0.0f,
-    0.5f,  -0.5f,   0.0f, 0.0f, 1.0f,
+    0.5f,  -0.5f,   1.0f, 0.0f, 1.0f,
 };
 
 //![1]
@@ -78,8 +78,8 @@ void ExampleRhiItemRenderer::initialize(QRhiCommandBuffer *cb) {
 
         m_pipeline.reset(m_rhi->newGraphicsPipeline());
         m_pipeline->setShaderStages({
-           { QRhiShaderStage::Vertex, getShader(QLatin1String(":/scenegraph/rhitextureitem/shaders/color.vert.qsb")) },
-           { QRhiShaderStage::Fragment, getShader(QLatin1String(":/scenegraph/rhitextureitem/shaders/color.frag.qsb")) }
+           { QRhiShaderStage::Vertex, getShader(QLatin1String(":/scenegraph/rhitextureitem/shaders/frame.vert.qsb")) },
+           { QRhiShaderStage::Fragment, getShader(QLatin1String(":/scenegraph/rhitextureitem/shaders/frame.frag.qsb")) }
         });
         QRhiVertexInputLayout inputLayout;
         inputLayout.setBindings({
@@ -103,7 +103,7 @@ void ExampleRhiItemRenderer::initialize(QRhiCommandBuffer *cb) {
     const QSize outputSize = renderTarget()->pixelSize();
     m_viewProjection = m_rhi->clipSpaceCorrMatrix();
     m_viewProjection.perspective(45.0f, outputSize.width() / (float) outputSize.height(), 0.01f, 1000.0f);
-    m_viewProjection.translate(0, 0, -4);
+    m_viewProjection.translate(0, 0, -2);
 //![2]
 }
 

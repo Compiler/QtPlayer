@@ -27,6 +27,7 @@ ApplicationWindow {
             if(play) AssetMaker.readAndWriteNext();
             img2.source = ""
             img2.source = pathToBuffer
+            videoView.angle += 1 % 360
         }
     }
 

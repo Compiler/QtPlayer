@@ -93,6 +93,8 @@ qt_add_shaders(appQtPlayer "rhitextureitem_shaders"
     FILES
         shaders/color.vert
         shaders/color.frag
+        shaders/frame.vert
+        shaders/frame.frag
 )
 
 qt_add_shaders(appQtPlayer "rhitextureitem_effect_shaders"
