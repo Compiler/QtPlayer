@@ -57,7 +57,7 @@ void ExampleRhiItemRenderer::synchronize(QQuickRhiItem *rhiItem) {
         m_pendingPixels = std::move(px);
         m_pendingSize = sz;
         m_hasPending = true;
-        qDebug() << "We have now digested a " << m_pendingSize.width() << "x" << m_pendingSize.height() << " new cv mat bruh\n";
+        //qDebug() << "We have now digested a " << m_pendingSize.width() << "x" << m_pendingSize.height() << " new cv mat bruh\n";
     }
 
 

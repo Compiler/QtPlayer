@@ -13,7 +13,7 @@ ApplicationWindow {
     title: qsTr("QtPlayer")
 
     readonly property string pathToBuffer: "file:///" + AssetsDir + "/buffer.tiff"
-    readonly property real fps: 30
+    property real fps: 60
     readonly property real timestep: 1000 / fps
     property bool play: false
 
@@ -70,6 +70,17 @@ ApplicationWindow {
             Keys.onReturnPressed: accepted()
             Keys.onEnterPressed: accepted()
         }
+
+
+        Slider {
+            from: 0
+            to: 120
+            value: 60
+            onValueChanged: {
+                fps =  value
+
+            }
+        }
         Button {
             id: playbutt
             text: play ? "Pause" : "Play"
@@ -103,6 +114,13 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Component.onCompleted: AssetMaker.setVideoView(videoView)
+
+            Rectangle {
+                anchors.centerIn: parent
+                width: 50
+                height: 50
+                color: "red"
+            }
         }
         RhiTextureItem {
             id: videoView2

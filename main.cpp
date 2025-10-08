@@ -72,6 +72,7 @@ public:
         //_reader->seekTo(5000);
         auto now = std::chrono::high_resolution_clock::now();
         _reader->nextFrame();
+        if(_reader->isEOF()) _reader->seekTo(0);
         auto end = std::chrono::high_resolution_clock::now();
         auto ms = std::chrono::duration<double, std::milli>(end - now).count();
         qInfo().nospace() << "main: nextframe() took " << ms << " ms";
