@@ -17,6 +17,26 @@ ApplicationWindow {
     readonly property real timestep: 1000 / fps
     property bool play: false
 
+    // Scene Graph FPS
+    property int sgFramesThisSecond: 0
+    property int sgFps: 0
+
+    Connections {
+        target: window
+        function onFrameSwapped() {
+            sgFramesThisSecond++
+        }
+    }
+    Timer {
+        interval: 1000
+        repeat: true
+        running: true
+        onTriggered: {
+            sgFps = sgFramesThisSecond
+            sgFramesThisSecond = 0
+        }
+    }
+
     Timer {
         interval: timestep
         repeat: true
@@ -48,6 +68,16 @@ ApplicationWindow {
         width: parent.width
         height: 32
         spacing: 16
+        Label {
+            text: "SG FPS: " + sgFps
+            font.pixelSize: 16
+            color: "lime"
+            background: Rectangle {
+                radius: 6
+                color: "#66000000"
+            }
+            padding: 6
+        }
         Button {
             id: butt
             text: "Open input"
