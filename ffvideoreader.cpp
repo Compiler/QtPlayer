@@ -63,6 +63,11 @@ void log_callback_report(void *ptr, int level, const char *fmt, va_list vl)	{
 }
 
 bool FFVideoReader::open() {
+    demuxer = new Demuxer();
+    demuxer->demux_open_filename(_path.toStdString());
+
+    return true;
+
     qInfo() << "Trying to open the file " << _path << isOpen();
     _isOpen = false;
     auto path = _path.toStdString();
@@ -270,6 +275,10 @@ unsigned FFVideoReader::detectOrientation(const AVStream *pStream) {
 }
 
 void FFVideoReader::close() {
+
+    delete demuxer;
+
+    return;
     qInfo() << "Trying to close the file" << isReadingNext << _path << isOpen();
     if (isOpen() && !isReadingNext) {
         qInfo() << "Closing the file" << _path;

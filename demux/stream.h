@@ -12,7 +12,7 @@ extern "C" {
 }
 class Stream
 {
-private:
+public:
     const char *name;
     int64_t pos;
     int eof; // valid only after read calls that returned a short result

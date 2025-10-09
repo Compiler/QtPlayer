@@ -11,6 +11,7 @@ extern "C" {
 
 #include <opencv2/opencv.hpp>
 #include "Reader.h"
+#include "demux/demuxer.h"
 #include <QFile>
 #include <QDebug>
 #include <atomic>
@@ -20,6 +21,9 @@ using namespace std;
 using namespace cv;
 
 class FFVideoReader: public Reader {
+
+    Demuxer *demuxer;
+
     AVFormatContext *_pFormat;
     AVCodecContext *_pCodecContext;
     SwsContext *_pSwsContext;

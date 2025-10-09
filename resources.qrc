@@ -1,5 +1,11 @@
 <RCC>
     <qresource prefix="/">
         <file>Assets/256x256_test.png</file>
+        <file>demux/demuxer.cpp</file>
+        <file>demux/demuxer.h</file>
+        <file>demux/example.cpp</file>
+        <file>demux/README.md</file>
+        <file>demux/stream.cpp</file>
+        <file>demux/stream.h</file>
     </qresource>
 </RCC>

@@ -110,6 +110,16 @@ int64_t Stream::getSize() const
     return size_;
 }
 
+void Stream::dropBuffers()
+{
+    // Ring buffer drop logic would go here
+    // For now, just reset internal ring buffer state if present
+    // Since we're using AVIOContext directly, we can call avio_flush to drop internal buffers
+    if (avio_) {
+        avio_flush(avio_);
+    }
+}
+
 void Stream::close()
 {
     if (avio_) {
