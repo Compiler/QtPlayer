@@ -101,14 +101,31 @@ ApplicationWindow {
             Keys.onEnterPressed: accepted()
         }
 
+        Button {
+            id: minF
+            text: "-"
+            anchors.right: fileDialog.left
+            onClicked: {
+                val.value -= 1
+            }
+        }
 
         Slider {
+            id: val
             from: 0
             to: 120
             value: 60
             onValueChanged: {
                 fps =  value
 
+            }
+        }
+        Button {
+            id: maxF
+            text: "+"
+            anchors.right: fileDialog.left
+            onClicked: {
+                val.value += 1
             }
         }
         Button {
