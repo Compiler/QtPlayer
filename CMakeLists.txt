@@ -22,6 +22,8 @@ qt_add_qml_module(appQtPlayer
         SOURCES ffvideoreader.h ffvideoreader.cpp
         SOURCES Reader.h
         SOURCES rhitextureitem.h rhitextureitem.cpp
+        SOURCES demux/stream.h demux/stream.cpp
+        SOURCES demux/demuxer.h demux/demuxer.cpp
 )
 
 
