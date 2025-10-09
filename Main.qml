@@ -23,8 +23,8 @@ ApplicationWindow {
         running:true
 
         onTriggered: {
-            //AssetMaker.writeBuffer()
-            if(play) AssetMaker.readAndWriteNext();
+            //AssetMaker._writeBuffer()
+            if(play) AssetMaker._readAndWriteNext();
             img2.source = ""
             img2.source = pathToBuffer
             videoView.angle += 1 % 360
@@ -37,7 +37,7 @@ ApplicationWindow {
         nameFilters: [ "All files (*)" ]
         onAccepted: {
             console.log("Selected file: " + fileDialog.selectedFile)
-            AssetMaker.openAndWrite(fileDialog.selectedFile)
+            AssetMaker._openAndWrite(fileDialog.selectedFile)
         }
         onRejected: {
             console.log("File selection cancelled")
@@ -54,7 +54,7 @@ ApplicationWindow {
             anchors.right: fileDialog.left
             onClicked: {
                 fileDialog.open()
-                AssetMaker.writeBuffer()
+                AssetMaker._writeBuffer()
             }
         }
 
@@ -65,7 +65,7 @@ ApplicationWindow {
             width: 180
             placeholderText: "enter frame number"
             focus: true
-            onAccepted:AssetMaker.seekTo(Number(ts.text) * timestep)
+            onAccepted:AssetMaker._seekTo(Number(ts.text) * timestep)
             EnterKey.type: Qt.EnterKeyDone
             Keys.onReturnPressed: accepted()
             Keys.onEnterPressed: accepted()

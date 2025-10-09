@@ -27,11 +27,92 @@ QString sourceDirPath() {
     return fi.absolutePath();
 }
 
+#include <thread>
+
 class AssetMaker : public QObject { Q_OBJECT
+private:
+
+    std::thread _runner;
+    std::queue<int> reqs;
+    std::mutex _lock;
+    std::condition_variable _cv;
+    std::atomic_bool _stop{false};
+
+    long long ts;
+    std::string file;
+
 public:
+
+    AssetMaker() {
+        _runner = std::thread(&AssetMaker::handleReq, this);
+    }
+
+    ~AssetMaker() {
+        {
+            std::lock_guard<std::mutex> g(_lock);
+            _stop = true;
+        }
+        _cv.notify_all();
+        if (_runner.joinable()) _runner.join();
+    }
+
+    Q_INVOKABLE void _writeBuffer() {
+        {
+            std::lock_guard<std::mutex> g(_lock);
+            reqs.push(1);
+        }
+        _cv.notify_one();
+    }
+
+    Q_INVOKABLE void _openAndWrite(QString f) {
+        {
+            std::lock_guard<std::mutex> g(_lock);
+            file = f.toStdString();
+            reqs.push(2);
+        }
+        _cv.notify_one();
+    }
+
+    Q_INVOKABLE void _seekTo(long long t) {
+        {
+            std::lock_guard<std::mutex> g(_lock);
+            ts = t;
+            reqs.push(3);
+        }
+        _cv.notify_one();
+    }
+
+    Q_INVOKABLE void _readAndWriteNext() {
+        {
+            std::lock_guard<std::mutex> g(_lock);
+            reqs.push(4);
+        }
+        _cv.notify_one();
+    }
+    void handleReq() {
+        std::unique_lock<std::mutex> l(_lock);
+        for (;;) {
+            _cv.wait(l, [this]{ return _stop || !reqs.empty(); });
+            if (_stop && reqs.empty()) break;
+
+            int code = reqs.front();
+            reqs.pop();
+
+            l.unlock();
+            switch(code) {
+            case 1: writeBuffer(); break;
+            case 2: openAndWrite(QString::fromStdString(file)); break;
+            case 3: seekTo(static_cast<float>(ts)); break;
+            case 4: readAndWriteNext(); break;
+            default: break;
+            }
+            l.lock();
+        }
+    }
 
     std::unique_ptr<videoio::FFVideoReader> _reader;
     Q_INVOKABLE void writeBuffer() {
+        std::unique_lock<std::mutex> l(_lock);
         static int count = 0;
         int pattern = count % 3;
         count++;
@@ -58,6 +139,7 @@ public:
     }
 
     Q_INVOKABLE void openAndWrite(QString file) {
+        std::unique_lock<std::mutex> l(_lock);
         _reader = std::make_unique<videoio::FFVideoReader>(file);
         _reader->open();
         auto mat = _reader->getFrame();
@@ -67,6 +149,7 @@ public:
     }
 
     Q_INVOKABLE void readAndWriteNext() {
+        std::unique_lock<std::mutex> l(_lock);
         if(!_reader) return;
         std::cout << __func__ << std::endl;
         //_reader->seekTo(5000);
@@ -84,6 +167,7 @@ public:
     }
 
     Q_INVOKABLE void seekTo(float seekToMs) {
+        std::unique_lock<std::mutex> l(_lock);
         if(!_reader) return;
         if (!_view) { qWarning() << "AssetMaker: no videoView set"; return; }
         std::cout << __func__ << std::endl;
@@ -101,7 +185,9 @@ public:
     }
 
 
-    Q_INVOKABLE void setVideoView(QObject* obj) { _view = obj; }
+    Q_INVOKABLE void setVideoView(QObject* obj) {
+        _view = obj;
+    }
     QObject* _view;
 
 
