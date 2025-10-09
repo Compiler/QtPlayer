@@ -7,7 +7,7 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Core GuiPrivate Qml Quick ShaderTools)
 
-qt_standard_project_setup(REQUIRES 6.9)
+qt_standard_project_setup(REQUIRES 6.10)
 
 qt_add_executable(appQtPlayer
     main.cpp
