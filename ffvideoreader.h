@@ -164,6 +164,10 @@ public:
     virtual long long readLast() override;
 
     virtual bool seekTo(long long timestamp, bool onFilterGraphReady = false) override {
+        demuxer->seek(timestamp / 1000);
+        demuxer->decode_next_video_frame();
+        return true;
+
         // std::string mySeekTo = std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id())).substr(0, 5) + " FFVR::seekTo(" + std::to_string(timestamp) + ")";
         // auto now = std::chrono::high_resolution_clock::now();
         // long long now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
@@ -202,6 +206,8 @@ public:
     }
 
     virtual Mat getFrame() override {
+        return demuxer->get_last_frame() != nullptr ? convertFrame(std::make_shared<AVFrame>(*demuxer->get_last_frame())) : Mat();
+
         Mat frame;
         std::shared_ptr<AVFrame> pFrame = getCurrentFrame();
         if (pFrame != nullptr) {

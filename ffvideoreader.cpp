@@ -65,6 +65,8 @@ void log_callback_report(void *ptr, int level, const char *fmt, va_list vl)	{
 bool FFVideoReader::open() {
     demuxer = new Demuxer();
     demuxer->demux_open_filename(_path.toStdString());
+    demuxer->seek(0);
+    demuxer->decode_next_video_frame();
 
     return true;
 
@@ -313,9 +315,13 @@ bool FFVideoReader::seekToKeyFrame(long long pts, int attempt) {
 
 Mat FFVideoReader::convertFrame(std::shared_ptr<AVFrame> pFrame) {
     if (pFrame != nullptr && pFrame->height > 0 && pFrame->width > 0) {
-        Mat frame(_height, _width, CV_16UC4);
+        Mat frame(pFrame->height, pFrame->width, CV_16UC4);
         int step = frame.step;
+        if (!_pSwsContext) {
+            _pSwsContext = sws_getContext(pFrame->width, pFrame->height, (AVPixelFormat)pFrame->format, pFrame->width, pFrame->height, AV_PIX_FMT_RGBA64LE, SWS_BICUBIC, NULL,NULL,NULL);
+        }
         sws_scale(_pSwsContext, pFrame->data, pFrame->linesize, 0, pFrame->height, &frame.data, &step);
+
         if (_rotate < 3) {
             Mat rframe;
             cv::rotate(frame, rframe, _rotate);
@@ -401,6 +407,9 @@ std::shared_ptr<AVFrame> FFVideoReader::find(long long pts) {
 }
 
 bool FFVideoReader::readNext() {
+    demuxer->decode_next_video_frame();
+
+    return true;
     // std::string mySeekTo = std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id())).substr(0, 5) + " FFVR::readNext(" + ")";
     // auto now = std::chrono::high_resolution_clock::now();
     // long long now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();

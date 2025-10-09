@@ -279,6 +279,8 @@ bool Demuxer::seek(double timestamp_seconds) {
     if (!is_open || !avfc) {
         return false;
     }
+    auto now = std::chrono::high_resolution_clock::now();
+    long long now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
     
     int64_t ts = static_cast<int64_t>(timestamp_seconds * AV_TIME_BASE);
     int ret = av_seek_frame(avfc, -1, ts, AVSEEK_FLAG_BACKWARD);
@@ -289,8 +291,11 @@ bool Demuxer::seek(double timestamp_seconds) {
         std::cerr << "av_seek_frame failed: " << errbuf << std::endl;
         return false;
     }
+
+    auto after = std::chrono::high_resolution_clock::now();
+    long long after_ms = std::chrono::duration_cast<std::chrono::milliseconds>(after.time_since_epoch()).count();
     
-    std::cout << "Seeked to " << timestamp_seconds << " seconds" << std::endl;
+    std::cout << "Seeked to " << timestamp_seconds << " seconds. Took " << after_ms - now_ms << "millisecond." << std::endl;
     return true;
 }
 
@@ -442,6 +447,18 @@ bool Demuxer::read_packet(DemuxPacket **packet) {
 }
 
 void Demuxer::close() {
+    if (tmp_pkt) {
+        av_packet_free(&tmp_pkt);
+        tmp_pkt = nullptr;
+    }
+    if (tmp_frame) {
+        av_frame_free(&tmp_frame);
+        tmp_frame = nullptr;
+    }
+    if (video_dec_ctx) {
+        avcodec_free_context(&video_dec_ctx);
+        video_dec_ctx = nullptr;
+    }
     if (avfc) {
         avformat_close_input(&avfc);
         avfc = nullptr;
@@ -466,4 +483,82 @@ void Demuxer::close() {
     duration = -1.0;
     
     std::cout << "Demuxer closed" << std::endl;
+}
+
+bool Demuxer::init_video_decoder()
+{
+    if (!avfc)
+        return false;
+    if (video_dec_ctx)
+        return true; // already inited
+    // Find first video stream
+    for (unsigned i = 0; i < avfc->nb_streams; ++i) {
+        if (avfc->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+            video_stream_index = (int)i;
+            break;
+        }
+    }
+    if (video_stream_index < 0)
+        return false;
+    AVStream *st = avfc->streams[video_stream_index];
+    const AVCodec *dec = avcodec_find_decoder(st->codecpar->codec_id);
+    if (!dec)
+        return false;
+    video_dec_ctx = avcodec_alloc_context3(dec);
+    if (!video_dec_ctx)
+        return false;
+    if (avcodec_parameters_to_context(video_dec_ctx, st->codecpar) < 0)
+        return false;
+    if (avcodec_open2(video_dec_ctx, dec, nullptr) < 0)
+        return false;
+    if (!tmp_pkt)
+        tmp_pkt = av_packet_alloc();
+    if (!tmp_frame)
+        tmp_frame = av_frame_alloc();
+    return tmp_pkt && tmp_frame;
+}
+
+bool Demuxer::decode_next_video_frame()
+{
+    if (!init_video_decoder())
+        return false;
+    // Read packets until decoder outputs one frame
+    while (true) {
+        int r = av_read_frame(avfc, tmp_pkt);
+        if (r < 0) {
+            // send null packet to flush
+            avcodec_send_packet(video_dec_ctx, nullptr);
+        } else if (tmp_pkt->stream_index == video_stream_index) {
+            avcodec_send_packet(video_dec_ctx, tmp_pkt);
+        }
+        av_packet_unref(tmp_pkt);
+
+        r = avcodec_receive_frame(video_dec_ctx, tmp_frame);
+        if (r == 0) {
+            // got a frame
+            return true;
+        }
+        if (r == AVERROR_EOF)
+            return false;
+        if (r == AVERROR(EAGAIN))
+            continue;
+        return false;
+    }
+}
+
+AVFrame *Demuxer::get_last_frame() const
+{
+    return tmp_frame;
+}
+
+int Demuxer::get_video_stream_index() const
+{
+    return video_stream_index;
+}
+
+AVRational Demuxer::get_video_time_base() const
+{
+    if (!avfc || video_stream_index < 0)
+        return AVRational{1,1};
+    return avfc->streams[video_stream_index]->time_base;
 }

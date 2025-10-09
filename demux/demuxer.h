@@ -83,6 +83,24 @@ public:
     bool seek_to_start();
     // Minimal: seek to start and decode the first video frame (for probing)
     bool decode_first_video_frame();
+
+    // Video decoding lifecycle
+    bool init_video_decoder();
+    // Demux and decode until one video frame is produced; returns true and
+    // stores it in an internal frame buffer retrievable via get_last_frame().
+    bool decode_next_video_frame();
+    // Returns a pointer to the last decoded frame (owned by Demuxer).
+    AVFrame *get_last_frame() const;
+    // Video stream helpers
+    int get_video_stream_index() const;
+    AVRational get_video_time_base() const;
+
+private:
+    // Decoder state
+    AVCodecContext *video_dec_ctx = nullptr;
+    AVPacket *tmp_pkt = nullptr;
+    AVFrame *tmp_frame = nullptr;
+    int video_stream_index = -1;
 };
 
 #endif // DEMUXER_H

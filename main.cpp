@@ -177,7 +177,7 @@ public:
         auto end = std::chrono::high_resolution_clock::now();
         auto ms = std::chrono::duration<double, std::milli>(end - now).count();
         qInfo().nospace() << "main: seekTo() took " << ms << " ms";
-        std::cout << _reader->getCurrentFrame()->best_effort_timestamp << std::endl;
+        // std::cout << _reader->getCurrentFrame()->best_effort_timestamp << std::endl;
         auto mat = _reader->getFrame();
         const QString dir = sourceDirPath() + "/Assets";
         pushMat(mat);

@@ -151,7 +151,7 @@ ApplicationWindow {
             id: img2
             Layout.fillWidth: true
             Layout.fillHeight: true
-            source: "file:///" + AssetsDir + "/256x256_test.png"
+            source: "file:///" + AssetsDir + "/buffer.tiff"
             cache: false
             asynchronous: false
         }
