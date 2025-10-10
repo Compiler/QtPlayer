@@ -164,8 +164,17 @@ public:
     virtual long long readLast() override;
 
     virtual bool seekTo(long long timestamp, bool onFilterGraphReady = false) override {
-        demuxer->seek(timestamp / 1000);
-        demuxer->decode_next_video_frame();
+
+        auto now = std::chrono::high_resolution_clock::now();
+        long long now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+        // demuxer->seek(timestamp);
+        bool res = demuxer->decode_to_frame_at_timestamp(timestamp / 1000);
+        auto after = std::chrono::high_resolution_clock::now();
+        long long after_ms = std::chrono::duration_cast<std::chrono::milliseconds>(after.time_since_epoch()).count();
+
+        std::cout << "Seeked to " << timestamp << " seconds. Took " << after_ms - now_ms << " millisecond. " << res << std::endl;
+        // demuxer->seek(timestamp);
+        // demuxer->decode_next_video_frame();
         return true;
 
         // std::string mySeekTo = std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id())).substr(0, 5) + " FFVR::seekTo(" + std::to_string(timestamp) + ")";

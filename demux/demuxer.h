@@ -89,6 +89,9 @@ public:
     // Demux and decode until one video frame is produced; returns true and
     // stores it in an internal frame buffer retrievable via get_last_frame().
     bool decode_next_video_frame();
+    // Seek to "seconds" and decode forward until a frame at or after that
+    // timestamp is produced. Stores it in the internal frame buffer.
+    bool decode_to_frame_at_timestamp(double seconds);
     // Returns a pointer to the last decoded frame (owned by Demuxer).
     AVFrame *get_last_frame() const;
     // Video stream helpers

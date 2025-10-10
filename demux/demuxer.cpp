@@ -562,3 +562,55 @@ AVRational Demuxer::get_video_time_base() const
         return AVRational{1,1};
     return avfc->streams[video_stream_index]->time_base;
 }
+
+bool Demuxer::decode_to_frame_at_timestamp(double seconds)
+{
+    if (!init_video_decoder())
+    {
+        std::cout << "false 1";
+        return false;
+    }
+
+    // Convert wall-clock seconds to the video's stream time base
+    AVRational tb = get_video_time_base();
+    int64_t target_pts = (int64_t)(seconds / av_q2d(tb));
+
+    // Seek slightly before the target to ensure we can decode through
+    // keyframes and reordering; use backward flag to land on or before.
+    if (av_seek_frame(avfc, video_stream_index, target_pts, AVSEEK_FLAG_BACKWARD) < 0){
+        std::cout << "false 2";
+        return false;
+    }
+    avcodec_flush_buffers(video_dec_ctx);
+
+    // Decode frames until we reach or pass target_pts
+    while (true) {
+        int r = av_read_frame(avfc, tmp_pkt);
+        if (r < 0) {
+            avcodec_send_packet(video_dec_ctx, nullptr);
+        } else if (tmp_pkt->stream_index == video_stream_index) {
+            avcodec_send_packet(video_dec_ctx, tmp_pkt);
+        }
+        av_packet_unref(tmp_pkt);
+
+        r = avcodec_receive_frame(video_dec_ctx, tmp_frame);
+        if (r == 0) {
+            int64_t fpts = tmp_frame->best_effort_timestamp;
+            if (fpts == AV_NOPTS_VALUE)
+                fpts = tmp_frame->pts;
+            if (fpts != AV_NOPTS_VALUE && fpts >= target_pts)
+                return true;
+            // otherwise continue reading/decoding until we cross target
+            continue;
+        }
+        if (r == AVERROR_EOF)
+        {        std::cout << "false 3";
+
+            return false;
+        }
+        if (r == AVERROR(EAGAIN))
+            continue;
+        std::cout << "false 4";
+        return false;
+    }
+}

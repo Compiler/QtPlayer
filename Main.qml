@@ -13,7 +13,7 @@ ApplicationWindow {
     title: qsTr("QtPlayer")
 
     readonly property string pathToBuffer: "file:///" + AssetsDir + "/buffer.tiff"
-    property real fps: 60
+    property real fps: 23.976
     readonly property real timestep: 1000 / fps
     property bool play: false
 
@@ -43,10 +43,8 @@ ApplicationWindow {
         running:true
 
         onTriggered: {
-            //AssetMaker._writeBuffer()
-            if(play) AssetMaker._readAndWriteNext();
-            img2.source = ""
-            img2.source = pathToBuffer
+            //AssetMaker.writeBuffer()
+            if(play) AssetMaker.readAndWriteNext();
             videoView.angle += 1 % 360
         }
     }
@@ -147,14 +145,14 @@ ApplicationWindow {
         anchors.fill: parent
 
 
-        Image {
-            id: img2
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            source: "file:///" + AssetsDir + "/buffer.tiff"
-            cache: false
-            asynchronous: false
-        }
+        // Image {
+        //     id: img2
+        //     Layout.fillWidth: true
+        //     Layout.fillHeight: true
+        //     source: "file:///" + AssetsDir + "/buffer.tiff"
+        //     cache: false
+        //     asynchronous: false
+        // }
 
         RhiTextureItem {
             id: videoView
