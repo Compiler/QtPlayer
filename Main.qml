@@ -45,9 +45,7 @@ ApplicationWindow {
         onTriggered: {
             //AssetMaker._writeBuffer()
             if(play) AssetMaker._readAndWriteNext();
-            img2.source = ""
-            img2.source = pathToBuffer
-            videoView.angle += 1 % 360
+            videoView2.angle += 1 % 360
         }
     }
 
@@ -147,21 +145,19 @@ ApplicationWindow {
         anchors.fill: parent
 
 
-        Image {
-            id: img2
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            source: "file:///" + AssetsDir + "/256x256_test.png"
-            cache: false
-            asynchronous: false
-        }
-
         RhiTextureItem {
             id: videoView
+            Layout.preferredWidth: 2
             Layout.fillWidth: true
             Layout.fillHeight: true
             Component.onCompleted: AssetMaker.setVideoView(videoView)
 
+        }
+        RhiTextureItem {
+            id: videoView2
+            Layout.preferredWidth: 1
+            Layout.fillWidth: true
+            Layout.fillHeight: true
             Rectangle {
                 anchors.centerIn: parent
                 width: 50
@@ -169,11 +165,16 @@ ApplicationWindow {
                 color: "red"
             }
         }
-        RhiTextureItem {
-            id: videoView2
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+    }
+
+    Slider {
+        anchors.top: splitPanes.bottom
+        from: 0
+        to: 10000
+        onValueChanged: {
+            AssetMaker._seekTo(value)
         }
+
     }
 
 

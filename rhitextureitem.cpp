@@ -1,7 +1,6 @@
 #include "rhitextureitem.h"
 #include <QFile>
 
-//![0]
 QQuickRhiItemRenderer *ExampleRhiItem::createRenderer() {
     return new ExampleRhiItemRenderer;
 }
@@ -62,21 +61,22 @@ void ExampleRhiItemRenderer::synchronize(QQuickRhiItem *rhiItem) {
 
 
 }
-//![0]
 
 static QShader getShader(const QString &name) {
     QFile f(name);
     return f.open(QIODevice::ReadOnly) ? QShader::fromSerialized(f.readAll()) : QShader();
 }
-
+static constexpr float R = 0.75f;
+//ccw
 static float vertexData[] = {
-    //   x,     y,    u,   v
-     0.0f,   0.5f,  0.5f, 0.0f,
-    -0.5f,  -0.5f,  0.0f, 1.0f,
-     0.5f,  -0.5f,  1.0f, 1.0f
-};
+    -R,   -R,   0.0f, 1.0f,
+    R,   -R,   1.0f, 1.0f,
+    R,    R,   1.0f, 0.0f,
 
-//![1]
+    R,    R,   1.0f, 0.0f,
+    -R,   -R,   0.0f, 1.0f,
+    -R,    R,   0.0f, 0.0f,
+};
 void ExampleRhiItemRenderer::initialize(QRhiCommandBuffer *cb) {
     if (m_rhi != rhi()) {
         m_rhi = rhi();
@@ -93,8 +93,6 @@ void ExampleRhiItemRenderer::initialize(QRhiCommandBuffer *cb) {
         m_textureFormat = finalTex->format();
         m_pipeline.reset();
     }
-//![1]
-//![2]
     if (!m_pipeline) {
         m_vbuf.reset(m_rhi->newBuffer(QRhiBuffer::Immutable, QRhiBuffer::VertexBuffer, sizeof(vertexData)));
         m_vbuf->create();
@@ -149,6 +147,8 @@ void ExampleRhiItemRenderer::initialize(QRhiCommandBuffer *cb) {
            { QRhiShaderStage::Vertex, vs },
            { QRhiShaderStage::Fragment, fs }
         });
+
+        //strides
         QRhiVertexInputLayout inputLayout;
         inputLayout.setBindings({
             { 4 * sizeof(float) }
@@ -163,6 +163,28 @@ void ExampleRhiItemRenderer::initialize(QRhiCommandBuffer *cb) {
         m_pipeline->setRenderPassDescriptor(renderTarget()->renderPassDescriptor());
         m_pipeline->create();
 
+
+        const bool isOpenGL =
+            (m_rhi->backend() == QRhi::OpenGLES2) ||
+                              (m_rhi->backend() == QRhi::Null);
+        qCritical() << "OpenGL backend? " << isOpenGL << " ; " << m_rhi->backendName();
+
+        auto Vflip = [isOpenGL](float v) -> float {
+            return isOpenGL ? (1.0f - v) : v;
+        };
+
+        static constexpr float R = 0.75f;
+        //ccw
+        float verts[] = {
+            -R,   -R,    0.0f, Vflip(0.0f),
+            R,   -R,    1.0f, Vflip(0.0f),
+            R,    R,    1.0f, Vflip(1.0f),
+
+            R,    R,    1.0f, Vflip(1.0f),
+            -R,   -R,    0.0f, Vflip(0.0f),
+            -R,    R,    0.0f, Vflip(1.0f),
+        };
+
         QRhiResourceUpdateBatch *resourceUpdates = m_rhi->nextResourceUpdateBatch();
         resourceUpdates->uploadStaticBuffer(m_vbuf.get(), vertexData);
         cb->resourceUpdate(resourceUpdates);
@@ -172,10 +194,8 @@ void ExampleRhiItemRenderer::initialize(QRhiCommandBuffer *cb) {
     m_viewProjection = m_rhi->clipSpaceCorrMatrix();
     m_viewProjection.perspective(45.0f, outputSize.width() / (float) outputSize.height(), 0.01f, 1000.0f);
     m_viewProjection.translate(0, 0, -2);
-//![2]
 }
 
-//![3]
 void ExampleRhiItemRenderer::render(QRhiCommandBuffer *cb) {
     if (m_hasPending) {
         if (!m_tex || m_tex->pixelSize() != m_pendingSize) {
@@ -225,8 +245,7 @@ void ExampleRhiItemRenderer::render(QRhiCommandBuffer *cb) {
     cb->setShaderResources(m_srb.get());
     const QRhiCommandBuffer::VertexInput vbufBinding(m_vbuf.get(), 0);
     cb->setVertexInput(0, 1, &vbufBinding);
-    cb->draw(3);
+    cb->draw(NUM_VERTS);
 
     cb->endPass();
 }
-//![3]
