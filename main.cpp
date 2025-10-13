@@ -140,6 +140,8 @@ public:
 
     Q_INVOKABLE void openAndWrite(QString file) {
         std::unique_lock<std::mutex> l(_lock);
+        if(file.contains("file:///"))
+            file = file.replace("file:///", "");
         _reader = std::make_unique<videoio::FFVideoReader>(file);
         _reader->open();
         auto mat = _reader->getFrame();

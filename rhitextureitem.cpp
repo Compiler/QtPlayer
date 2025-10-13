@@ -66,6 +66,7 @@ static QShader getShader(const QString &name) {
     QFile f(name);
     return f.open(QIODevice::ReadOnly) ? QShader::fromSerialized(f.readAll()) : QShader();
 }
+static constexpr int NUM_VERTS = 6;
 static constexpr float R = 0.75f;
 //ccw
 static float vertexData[] = {
