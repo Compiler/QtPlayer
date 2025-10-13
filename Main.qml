@@ -110,12 +110,11 @@ ApplicationWindow {
 
         Slider {
             id: val
-            from: 0
-            to: 120
+            from: 1
+            to: 350
             value: 60
             onValueChanged: {
                 fps =  value
-
             }
         }
         Button {
@@ -172,6 +171,7 @@ ApplicationWindow {
         from: 0
         to: 10000
         onValueChanged: {
+            pause = true
             AssetMaker._seekTo(value)
         }
 
