@@ -56,15 +56,18 @@ int64_t Demuxer::mp_seek(void *opaque, int64_t offset, int whence) {
             if (!demuxer->stream->seek(offset)) {
                 return -1;
             }
+            std::cout << "[mpseek] case SEEK_SET " << offset << "**" << demuxer->stream->tell() << std::endl;
             return demuxer->stream->tell();
             
         case SEEK_CUR:
+            std::cout << "[mpseek] case SEEK_CUR" << std::endl;
             if (!demuxer->stream->seek(demuxer->stream->tell() + offset)) {
                 return -1;
             }
             return demuxer->stream->tell();
             
         case SEEK_END: {
+            std::cout << "[mpseek] case SEEK_END" << std::endl;
             int64_t size = demuxer->stream->getSize();
             if (size < 0) {
                 return -1;
@@ -247,7 +250,7 @@ bool Demuxer::demux_open() {
     }
 #endif
     
-    std::cout << "Duration: " << duration << "s, Start time: " << start_time 
+    std::cout << "Duration: " << duration << "s, Start time: " << start_time
               << "s, Seekable: " << (seekable ? "yes" : "no") << std::endl;
     
     is_open = true;

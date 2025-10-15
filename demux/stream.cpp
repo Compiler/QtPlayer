@@ -23,6 +23,7 @@ bool Stream::open(const std::string &url)
 
     // Determine size if available
     int64_t cur = avio_tell(avio_);
+    seekable = avio_->seekable & AVIO_SEEKABLE_NORMAL;
     if (avio_seek(avio_, 0, SEEK_END) >= 0) {
         size_ = avio_tell(avio_);
         if (size_ >= 0 && avio_seek(avio_, cur, SEEK_SET) >= 0)
@@ -107,7 +108,8 @@ int64_t Stream::tell() const
 
 int64_t Stream::getSize() const
 {
-    return size_;
+    AVIOContext *avio = avio_;
+    return avio_size(avio);
 }
 
 void Stream::dropBuffers()
